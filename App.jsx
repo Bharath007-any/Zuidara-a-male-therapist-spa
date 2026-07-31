@@ -498,7 +498,7 @@ export default function ZuidaraSpa() {
       <input type="password" value={adminPin} onChange={e => setAdminPin(e.target.value)}
         placeholder="Enter PIN"
         style={{ width: "100%", background: C.bg2, border: `1px solid ${C.border}`, color: C.text, padding: "14px", borderRadius: 4, fontSize: 18, textAlign: "center", letterSpacing: 8, outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 16 }} />
-      <GoldBtn onClick={() => { if (adminPin === "1234" || adminPin === "") { setAdminUnlocked(true); setAdminPin(""); } else { showToast("Incorrect PIN", "error"); setAdminPin(""); } }} style={{ width: "100%" }}>
+      <GoldBtn onClick={() => { if (adminPin === "7892389080" || adminPin === "") { setAdminUnlocked(true); setAdminPin(""); } else { showToast("Incorrect PIN", "error"); setAdminPin(""); } }} style={{ width: "100%" }}>
         Unlock Admin
       </GoldBtn>
       <div style={{ fontSize: 10, color: C.textFaint, marginTop: 16 }}>Demo PIN: 1234</div>
