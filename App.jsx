@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 // ── INITIAL DATA ──────────────────────────────────────────────────────────────
 const INIT_THERAPISTS = [
-  { id: 1, name: "Bharath Kumar", specialty: "Deep Tissue & Swedish", rating: 4.9, reviews: 212, gender: "male", available: true, photo: "👨‍⚕️", phone: "+91 98765 43210", experience: "7 years", certifications: "ITEC Certified, Ayurvedic Specialist" },
+  { id: 1, name: "Bharath Kumar", specialty: "Deep Tissue & Swedish", rating: 4.9, reviews: 212, gender: "male", available: true, photo: "👨‍⚕️", phone: "+91 78923 89080", experience: "7 years", certifications: "ITEC Certified, Ayurvedic Specialist" },
   { id: 2, name: "Rajan Pillai", specialty: "Hot Stone & Balinese", rating: 4.8, reviews: 134, gender: "male", available: true, photo: "👨‍⚕️", phone: "+91 91234 56789", experience: "5 years", certifications: "CIBTAC Certified" },
 ];
 
@@ -16,18 +16,19 @@ const INIT_SERVICES = [
 ];
 
 const INIT_BOOKINGS = [
-  { id: 1, customer: "Sneha K.", service: "Swedish Relaxation", therapist: "Bharath Kumar", date: "2026-08-06", slot: "10:00 AM", amount: 1499, status: "completed", phone: "+91 99887 66554" },
-  { id: 2, customer: "Divya M.", service: "Hot Stone", therapist: "Rajan Pillai", date: "2026-08-06", slot: "2:30 PM", amount: 2299, status: "confirmed", phone: "+91 98765 11223" },
+  { id: 1, customer: "Sneha K.", service: "Swedish Relaxation", therapist: "Bharath Kumar", date: "Today", slot: "10:00 AM", amount: 1499, status: "completed", phone: "+91 99887 66554" },
+  { id: 2, customer: "Divya M.", service: "Hot Stone", therapist: "Rajan Pillai", date: "Today", slot: "2:30 PM", amount: 2299, status: "confirmed", phone: "+91 98765 11223" },
 ];
 
 const INIT_SETTINGS = {
   spaName: "Zuidara Spa",
   tagline: "Luxury Home Massage · Bengaluru",
-  phone: "+91 98765 43210",
+  phone: "+91 78923 89080",
   email: "hello@zuidaraspa.in",
   address: "Bengaluru, Karnataka",
   instagram: "@zuidaraspa",
-  whatsapp: "919876543210", // Raw digits for WhatsApp link API
+  whatsapp: "917892389080", // Raw digits for WhatsApp URL API
+  makeWebhookUrl: "", // Optional: Paste your Make.com Webhook URL here
   firstTimeDiscount: 20,
   referralCredit: 500,
   openTime: "10:00 AM",
@@ -154,6 +155,9 @@ export default function ZuidaraSpa() {
   const [isTyping, setIsTyping] = useState(false);
   const botEndRef = useRef(null);
 
+  // Social Proof Banner
+  const [recentPopup, setRecentPopup] = useState(null);
+
   // Admin modals
   const [editTherapist, setEditTherapist] = useState(null);
   const [editService, setEditService] = useState(null);
@@ -167,6 +171,24 @@ export default function ZuidaraSpa() {
   const [settingsDraft, setSettingsDraft] = useState(settings);
 
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 2800); };
+
+  // Social Proof Popup Trigger
+  useEffect(() => {
+    const notifications = [
+      "Sneha from Indiranagar booked Deep Tissue 💆‍♀️",
+      "Divya from HSR Layout claimed 20% Off 🌸",
+      "Preethi from Koramangala booked Swedish Relaxation ✨",
+      "Roshini from Whitefield booked Aromatherapy 🌿",
+    ];
+
+    const interval = setInterval(() => {
+      const randomNotice = notifications[Math.floor(Math.random() * notifications.length)];
+      setRecentPopup(randomNotice);
+      setTimeout(() => setRecentPopup(null), 4000);
+    }, 14000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Bot init
   useEffect(() => {
@@ -419,11 +441,20 @@ export default function ZuidaraSpa() {
                   phone: customerPhone 
                 };
 
-                // Save to local booking state
+                // Save locally
                 setBookings(p => [...p, newBooking]);
                 setBookingDone(true);
 
-                // WhatsApp Instant Redirection
+                // Option 1: Trigger Make.com Webhook if configured
+                if (settings.makeWebhookUrl) {
+                  fetch(settings.makeWebhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newBooking)
+                  }).catch(e => console.error("Webhook error:", e));
+                }
+
+                // Option 2: WhatsApp Instant Redirection[cite: 2]
                 const textMessage = encodeURIComponent(
                   `*New Spa Booking Request!* 🌸\n\n` +
                   `*Name:* ${customerName}\n` +
@@ -553,7 +584,7 @@ export default function ZuidaraSpa() {
       <input type="password" value={adminPin} onChange={e => setAdminPin(e.target.value)}
         placeholder="Enter PIN"
         style={{ width: "100%", background: C.bg2, border: `1px solid ${C.border}`, color: C.text, padding: "14px", borderRadius: 4, fontSize: 18, textAlign: "center", letterSpacing: 8, outline: "none", fontFamily: "inherit", boxSizing: "border-box", marginBottom: 16 }} />
-      <GoldBtn onClick={() => { if (adminPin === "Bhar9080" || adminPin === "") { setAdminUnlocked(true); setAdminPin(""); } else { showToast("Incorrect PIN", "error"); setAdminPin(""); } }} style={{ width: "100%" }}>
+      <GoldBtn onClick={() => { if (adminPin === "1234" || adminPin === "") { setAdminUnlocked(true); setAdminPin(""); } else { showToast("Incorrect PIN", "error"); setAdminPin(""); } }} style={{ width: "100%" }}>
         Unlock Admin
       </GoldBtn>
       <div style={{ fontSize: 10, color: C.textFaint, marginTop: 16 }}>Demo PIN: 1234</div>
@@ -823,12 +854,13 @@ export default function ZuidaraSpa() {
       <Input label="Tagline" value={settingsDraft.tagline} onChange={v => setSettingsDraft(p => ({ ...p, tagline: v }))} />
       <Textarea label="About Text" value={settingsDraft.aboutText} onChange={v => setSettingsDraft(p => ({ ...p, aboutText: v }))} rows={4} />
 
-      <SectionTitle>Contact Details</SectionTitle>
+      <SectionTitle>Contact & Webhook Settings</SectionTitle>
       <Input label="Phone" value={settingsDraft.phone} onChange={v => setSettingsDraft(p => ({ ...p, phone: v }))} />
       <Input label="Email" value={settingsDraft.email} onChange={v => setSettingsDraft(p => ({ ...p, email: v }))} />
       <Input label="Address" value={settingsDraft.address} onChange={v => setSettingsDraft(p => ({ ...p, address: v }))} />
       <Input label="Instagram Handle" value={settingsDraft.instagram} onChange={v => setSettingsDraft(p => ({ ...p, instagram: v }))} />
-      <Input label="WhatsApp Number (Digits Only)" value={settingsDraft.whatsapp} onChange={v => setSettingsDraft(p => ({ ...p, whatsapp: v }))} placeholder="919876543210" />
+      <Input label="WhatsApp Number (Digits Only)" value={settingsDraft.whatsapp} onChange={v => setSettingsDraft(p => ({ ...p, whatsapp: v }))} placeholder="917892389080" />
+      <Input label="Make.com Webhook URL (Optional)" value={settingsDraft.makeWebhookUrl || ""} onChange={v => setSettingsDraft(p => ({ ...p, makeWebhookUrl: v }))} placeholder="https://hook.eu2.make.com/..." />
 
       <SectionTitle>Business Hours & Offers</SectionTitle>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -852,7 +884,7 @@ export default function ZuidaraSpa() {
 
       <SectionTitle>App Info</SectionTitle>
       <Card>
-        {[["App", "Zuidara Spa"], ["Version", "2.1.0"], ["Built with", "React + Vite"], ["Deployment", "Vercel Live"], ["Platform", "Web / PWA"]].map(([l, v]) => (
+        {[["App", "Zuidara Spa"], ["Version", "2.2.0"], ["Built with", "React + Vite"], ["Deployment", "Vercel Live"], ["Platform", "Web / PWA"]].map(([l, v]) => (
           <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${C.border}`, fontSize: 12 }}>
             <span style={{ color: C.textMuted }}>{l}</span><span style={{ fontWeight: 600 }}>{v}</span>
           </div>
@@ -864,11 +896,10 @@ export default function ZuidaraSpa() {
         [true, "Customer booking flow"],
         [true, "WhatsApp instant redirection"],
         [true, "Local storage state persistence"],
+        [true, "Make.com lead capture webhook"],
         [true, "Zara AI chatbot"],
-        [true, "Admin panel"],
-        [true, "Therapist management"],
-        [true, "Service management"],
-        [false, "Razorpay payment gateway"],
+        [true, "Admin panel & settings"],
+        [false, "ManyChat DM auto-responder"],
         [false, "Google My Business listing"],
       ].map(([done, item]) => (
         <div key={item} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", borderBottom: `1px solid ${C.border}22`, fontSize: 13 }}>
@@ -911,6 +942,14 @@ export default function ZuidaraSpa() {
         *{box-sizing:border-box}
         button,input,textarea{font-family:inherit}
       `}</style>
+
+      {/* Social Proof Banner */}
+      {recentPopup && (
+        <div style={{ position: "fixed", bottom: 70, left: 20, right: 20, background: "#1A0F0A", border: "1px solid #C9A96E44", color: "#F5EFE6", padding: "10px 14px", borderRadius: 8, fontSize: 11, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", zIndex: 99, display: "flex", alignItems: "center", gap: 10, animation: "fadeIn 0.3s ease" }}>
+          <span>🔥</span>
+          <span>{recentPopup}</span>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (
