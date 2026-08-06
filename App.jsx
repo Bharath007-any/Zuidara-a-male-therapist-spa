@@ -28,7 +28,7 @@ const INIT_SETTINGS = {
   address: "Bengaluru, Karnataka",
   instagram: "@zuidaraspa",
   whatsapp: "917892389080", // Raw digits for WhatsApp URL API
-  makeWebhookUrl: "", // Optional: Paste your Make.com Webhook URL here
+  makeWebhookUrl: "https://hook.eu1.make.com/vduccdm5muvgx9x6danpkdosyy0s4iuk", // Optional: Paste your Make.com Webhook URL here
   firstTimeDiscount: 20,
   referralCredit: 500,
   openTime: "10:00 AM",
@@ -860,7 +860,7 @@ export default function ZuidaraSpa() {
       <Input label="Address" value={settingsDraft.address} onChange={v => setSettingsDraft(p => ({ ...p, address: v }))} />
       <Input label="Instagram Handle" value={settingsDraft.instagram} onChange={v => setSettingsDraft(p => ({ ...p, instagram: v }))} />
       <Input label="WhatsApp Number (Digits Only)" value={settingsDraft.whatsapp} onChange={v => setSettingsDraft(p => ({ ...p, whatsapp: v }))} placeholder="917892389080" />
-      <Input label="Make.com Webhook URL (Optional)" value={settingsDraft.makeWebhookUrl || ""} onChange={v => setSettingsDraft(p => ({ ...p, makeWebhookUrl: v }))} placeholder="https://hook.eu2.make.com/..." />
+      <Input label="Make.com Webhook URL (Optional)" value={settingsDraft.makeWebhookUrl || ""} onChange={v => setSettingsDraft(p => ({ ...p, makeWebhookUrl: v }))} placeholder="https://hook.eu1.make.com/vduccdm5muvgx9x6danpkdosyy0s4iuk" />
 
       <SectionTitle>Business Hours & Offers</SectionTitle>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
