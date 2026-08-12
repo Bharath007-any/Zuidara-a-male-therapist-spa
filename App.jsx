@@ -275,7 +275,7 @@ export default function ZuidaraSpa() {
         <div style={{ padding: "40px 20px", textAlign: "center" }}>
           <div style={{ fontSize: 36, marginBottom: 10 }}>🔐</div>
           <div style={{ fontSize: 18, color: C.gold, marginBottom: 16 }}>Admin Access</div>
-          <Input label="PIN" value={adminPin} onChange={setAdminPin} type="password" placeholder="1234" />
+          <Input label="PIN" value={adminPin} onChange={setAdminPin} type="password" placeholder="Bhar9080" />
           <GoldBtn onClick={() => { if (adminPin === "1234" || adminPin === "") setAdminUnlocked(true); else showToast("Incorrect PIN", "error"); }} style={{ width: "100%" }}>Unlock</GoldBtn>
         </div>
       );
