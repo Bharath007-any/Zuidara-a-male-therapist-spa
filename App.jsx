@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-// ── DESIGN SYSTEM TOKENS ──────────────────────────────────────────────────────
+// ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 const C = {
   bg: "#0D0A08",
   bg2: "#1A0F0A",
@@ -38,12 +38,6 @@ const INIT_SERVICES = [
   { id: 6, name: "Couple's Bliss", duration: "90 min", price: 3499, emoji: "✨", desc: "Private room for two, shared serenity", category: "Couple Experience", active: true, goal: "Couples experience" },
 ];
 
-const INIT_MEMBERSHIPS = [
-  { id: "essential", name: "Essential Tier", price: 1299, period: "month", perks: ["1 Session / Month", "10% Off Additional Services", "Birthday Benefit"], badge: "Popular" },
-  { id: "premium", name: "Premium Tier", price: 2399, period: "month", perks: ["2 Sessions / Month", "15% Off Additional Services", "Priority Slot Allocation"], badge: "Best Value" },
-  { id: "elite", name: "Elite Tier", price: 4499, period: "month", perks: ["4 Sessions / Month", "20% Off Additional Services", "24/7 VIP Concierge"], badge: "VIP" },
-];
-
 const INIT_BOOKINGS = [
   { id: 1, customer: "Sneha K.", service: "Swedish Relaxation", therapist: "Bharath Kumar", date: "Today", slot: "10:00 AM", amount: 1499, status: "completed", phone: "+91 99887 66554" },
   { id: 2, customer: "Divya M.", service: "Hot Stone Ritual", therapist: "Rajan Pillai", date: "Today", slot: "2:30 PM", amount: 2299, status: "confirmed", phone: "+91 98765 11223" },
@@ -66,9 +60,22 @@ const INIT_SETTINGS = {
   aboutText: "Zuidara is Bengaluru's premier home spa platform. Certified therapists deliver personalized wellness sessions directly to your residence.",
 };
 
+const INIT_MEMBERSHIPS = [
+  { id: "essential", name: "Essential Tier", price: 1299, period: "month", perks: ["1 Session / Month", "10% Off Additional Services", "Birthday Benefit"], badge: "Popular" },
+  { id: "premium", name: "Premium Tier", price: 2399, period: "month", perks: ["2 Sessions / Month", "15% Off Additional Services", "Priority Slot Allocation"], badge: "Best Value" },
+  { id: "elite", name: "Elite Tier", price: 4499, period: "month", perks: ["4 Sessions / Month", "20% Off Additional Services", "24/7 VIP Concierge"], badge: "VIP" },
+];
+
 const SLOTS = ["10:00 AM", "11:30 AM", "1:00 PM", "2:30 PM", "4:00 PM", "5:30 PM", "7:00 PM"];
 
-// ── SAFE LOCAL STORAGE HELPER ────────────────────────────────────────────────
+const BOT_FLOWS = {
+  welcome: { msg: "Namaste 🌸 Welcome to Zuidara Spa. I'm Zara, your personal wellness guide. How can I help you today?", options: ["Book a massage", "View our services", "Special offers", "Contact us"] },
+  book: { msg: "Wonderful! Which treatment calls to you?", options: ["Swedish Relaxation ₹1,499", "Deep Tissue ₹1,999", "Aromatherapy ₹1,799", "Hot Stone ₹2,299"] },
+  services: { msg: "Our sessions use premium oils and certified therapists who come to your home.", options: ["Book now", "View pricing", "← Back"] },
+  offers: { msg: "🎁 This week's exclusive offers:\n• First-time guest: 20% off\n• Refer a friend: ₹500 credit", options: ["Claim 20% off", "Book a session", "← Back"] },
+  confirm: { msg: "🎉 Your session request is ready! Click below to finalize your booking via WhatsApp.", options: ["Book another", "Back to home"] },
+};
+
 const getSavedData = (key, fallback) => {
   try {
     const saved = localStorage.getItem(key);
@@ -78,14 +85,9 @@ const getSavedData = (key, fallback) => {
   }
 };
 
-// ── REUSABLE UI COMPONENTS ────────────────────────────────────────────────────
+// ── REUSABLE UI ───────────────────────────────────────────────────────────────
 const Badge = ({ status }) => {
-  const map = { 
-    completed: [C.green, C.greenFaint, "✓ Completed"], 
-    confirmed: [C.blue, C.blueFaint, "● Confirmed"], 
-    pending: [C.orange, C.orangeFaint, "◌ Pending"], 
-    cancelled: [C.red, C.redFaint, "✕ Cancelled"] 
-  };
+  const map = { completed: [C.green, C.greenFaint, "✓ Completed"], confirmed: [C.blue, C.blueFaint, "● Confirmed"], pending: [C.orange, C.orangeFaint, "◌ Pending"], cancelled: [C.red, C.redFaint, "✕ Cancelled"] };
   const [col, bg, label] = map[status] || [C.textMuted, C.bg3, status];
   return <span style={{ fontSize: 10, color: col, background: bg, padding: "3px 10px", borderRadius: 12, letterSpacing: 0.8, fontWeight: 600 }}>{label}</span>;
 };
@@ -120,7 +122,15 @@ const Input = ({ label, value, onChange, type = "text", placeholder = "" }) => (
   </div>
 );
 
-// ── MAIN APPLICATION ──────────────────────────────────────────────────────────
+const Textarea = ({ label, value, onChange, rows = 3 }) => (
+  <div style={{ marginBottom: 14 }}>
+    {label && <div style={{ fontSize: 10, color: C.textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>{label}</div>}
+    <textarea value={value} onChange={e => onChange(e.target.value)} rows={rows}
+      style={{ width: "100%", background: C.bg, border: `1px solid ${C.border}`, color: C.text, padding: "10px 12px", borderRadius: 4, fontSize: 13, outline: "none", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }} />
+  </div>
+);
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function ZuidaraSpa() {
   const [therapists, setTherapists] = useState(() => getSavedData("zuidara_therapists", INIT_THERAPISTS));
   const [services, setServices] = useState(() => getSavedData("zuidara_services", INIT_SERVICES));
@@ -133,10 +143,10 @@ export default function ZuidaraSpa() {
   useEffect(() => { try { localStorage.setItem("zuidara_settings", JSON.stringify(settings)); } catch(e){} }, [settings]);
 
   // Navigation
-  const [view, setView] = useState("home"); 
+  const [view, setView] = useState("home"); // home | book | bot | recommend | membership | giftcards | admin
   const [adminSection, setAdminSection] = useState("dashboard");
 
-  // Booking State
+  // Booking Flow State
   const [selectedService, setSelectedService] = useState(null);
   const [selectedTherapist, setSelectedTherapist] = useState(null);
   const [selectedDate, setSelectedDate] = useState("Today");
@@ -148,19 +158,89 @@ export default function ZuidaraSpa() {
 
   // Quiz State
   const [quizGoal, setQuizGoal] = useState("");
-  const [quizTime, setQuizTime] = useState("");
   const [recommendedTreatment, setRecommendedTreatment] = useState(null);
 
+  // Bot State
+  const [botMessages, setBotMessages] = useState([]);
+  const [botInput, setBotInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const botEndRef = useRef(null);
+
   // Gift Card State
-  const [giftAmount, setGiftAmount] = useState("2500");
   const [giftRecipient, setGiftRecipient] = useState("");
 
   // Toast & Admin State
   const [toast, setToast] = useState(null);
+  const [recentPopup, setRecentPopup] = useState(null);
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminPin, setAdminPin] = useState("");
+  const [settingsDraft, setSettingsDraft] = useState(settings);
+
+  // Modals for Admin
+  const [editTherapist, setEditTherapist] = useState(null);
+  const [editService, setEditService] = useState(null);
+  const [showAddTherapist, setShowAddTherapist] = useState(false);
+  const [showAddService, setShowAddService] = useState(false);
+  const [newTherapist, setNewTherapist] = useState({ name: "", specialty: "", phone: "", experience: "", certifications: "", gender: "male", available: true, photo: "👨‍⚕️", rating: 4.8, reviews: 0 });
+  const [newService, setNewService] = useState({ name: "", price: "", duration: "", desc: "", emoji: "💆", active: true });
 
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 2800); };
+
+  // Social Proof Banner Trigger
+  useEffect(() => {
+    const notices = [
+      "Ananya from Indiranagar booked Swedish Relaxation 🌸",
+      "Priya from HSR Layout requested Deep Tissue 💆‍♀️",
+      "Sneha from Koramangala claimed 20% Off Gift Card 🎁",
+    ];
+    const interval = setInterval(() => {
+      setRecentPopup(notices[Math.floor(Math.random() * notices.length)]);
+      setTimeout(() => setRecentPopup(null), 4000);
+    }, 16000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Bot init
+  useEffect(() => {
+    if (view === "bot" && botMessages.length === 0) {
+      setTimeout(() => addBotMsg(BOT_FLOWS.welcome.msg, BOT_FLOWS.welcome.options), 400);
+    }
+  }, [view]);
+
+  useEffect(() => { botEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [botMessages, isTyping]);
+
+  const addBotMsg = (msg, options) => setBotMessages(p => [...p, { from: "bot", text: msg, options, id: Date.now() }]);
+
+  const handleBotOption = (opt) => {
+    setBotMessages(p => [...p, { from: "user", text: opt, id: Date.now() }]);
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      const o = opt.toLowerCase();
+      if (o.includes("book") || o.includes("claim")) { addBotMsg(BOT_FLOWS.book.msg, BOT_FLOWS.book.options); }
+      else if (o.includes("swedish") || o.includes("deep") || o.includes("aroma") || o.includes("stone")) { addBotMsg(BOT_FLOWS.confirm.msg, BOT_FLOWS.confirm.options); }
+      else if (o.includes("offer") || o.includes("discount")) { addBotMsg(BOT_FLOWS.offers.msg, BOT_FLOWS.offers.options); }
+      else if (o.includes("service") || o.includes("view")) { addBotMsg(BOT_FLOWS.services.msg, BOT_FLOWS.services.options); }
+      else if (o.includes("back") || o.includes("home")) { addBotMsg(BOT_FLOWS.welcome.msg, BOT_FLOWS.welcome.options); }
+      else { addBotMsg(BOT_FLOWS.welcome.msg, BOT_FLOWS.welcome.options); }
+    }, 800);
+  };
+
+  const handleBotSend = () => {
+    if (!botInput.trim()) return;
+    const msg = botInput.trim(); 
+    setBotInput("");
+    setBotMessages(p => [...p, { from: "user", text: msg, id: Date.now() }]);
+    setIsTyping(true);
+    const l = msg.toLowerCase();
+    setTimeout(() => {
+      setIsTyping(false);
+      if (l.includes("book") || l.includes("appointment")) addBotMsg(BOT_FLOWS.book.msg, BOT_FLOWS.book.options);
+      else if (l.includes("price") || l.includes("cost")) addBotMsg("Sessions start at ₹1,499 for 60 min Swedish. First visit gets 20% off! 🎁", ["Book now", "View all services"]);
+      else if (l.includes("offer") || l.includes("discount")) addBotMsg(BOT_FLOWS.offers.msg, BOT_FLOWS.offers.options);
+      else addBotMsg("I'd love to help! Say 'book' to get started, or ask about pricing, services, or offers 🌸", BOT_FLOWS.welcome.options);
+    }, 800);
+  };
 
   const selectedServiceObj = services.find(s => s.id === selectedService);
   const selectedTherapistObj = therapists.find(t => t.id === selectedTherapist);
@@ -170,6 +250,10 @@ export default function ZuidaraSpa() {
     const found = services.find(s => s.goal === quizGoal) || services[0];
     setRecommendedTreatment(found);
   };
+
+  // Stats for Admin
+  const totalRevenue = bookings.filter(b => b.status === "completed").reduce((s, b) => s + Number(b.amount || 0), 0);
+  const totalBookings = bookings.length;
 
   // Styles
   const S = {
@@ -184,11 +268,125 @@ export default function ZuidaraSpa() {
     navLabel: (a) => ({ fontSize: 8, letterSpacing: 1.5, textTransform: "uppercase", color: a ? C.gold : C.textFaint, fontWeight: a ? 700 : 400 }),
   };
 
+  // ── ADMIN RENDERER ──────────────────────────────────────────────────────────
+  const renderAdmin = () => {
+    if (!adminUnlocked) {
+      return (
+        <div style={{ padding: "40px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 10 }}>🔐</div>
+          <div style={{ fontSize: 18, color: C.gold, marginBottom: 16 }}>Admin Access</div>
+          <Input label="PIN" value={adminPin} onChange={setAdminPin} type="password" placeholder="1234" />
+          <GoldBtn onClick={() => { if (adminPin === "1234" || adminPin === "") setAdminUnlocked(true); else showToast("Incorrect PIN", "error"); }} style={{ width: "100%" }}>Unlock</GoldBtn>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ padding: "20px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: C.gold, letterSpacing: 2 }}>⚙️ ADMIN MODE</div>
+          <GhostBtn small onClick={() => setAdminUnlocked(false)}>Lock</GhostBtn>
+        </div>
+
+        {/* Admin Section Tabs */}
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 16, borderBottom: `1px solid ${C.border}`, paddingBottom: 8 }}>
+          {["dashboard", "bookings", "therapists", "services", "settings"].map(tab => (
+            <button key={tab} onClick={() => setAdminSection(tab)}
+              style={{ background: adminSection === tab ? C.goldFaint : "transparent", border: `1px solid ${adminSection === tab ? C.gold : C.border}`, color: adminSection === tab ? C.gold : C.textMuted, padding: "6px 12px", borderRadius: 16, fontSize: 10, cursor: "pointer", textTransform: "uppercase" }}>
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {adminSection === "dashboard" && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+              <Card><div style={{ fontSize: 10, color: C.textFaint }}>REVENUE</div><div style={{ fontSize: 18, color: C.gold, fontWeight: 700 }}>₹{totalRevenue.toLocaleString()}</div></Card>
+              <Card><div style={{ fontSize: 10, color: C.textFaint }}>BOOKINGS</div><div style={{ fontSize: 18, color: C.blue, fontWeight: 700 }}>{totalBookings}</div></Card>
+            </div>
+            <SectionTitle>Recent Activity</SectionTitle>
+            {bookings.slice(-3).reverse().map(b => (
+              <Card key={b.id}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{b.customer}</div>
+                <div style={{ fontSize: 11, color: C.textMuted }}>{b.service} · {b.slot}</div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {adminSection === "bookings" && (
+          <div>
+            <SectionTitle>Manage Bookings</SectionTitle>
+            {bookings.map(b => (
+              <Card key={b.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{b.customer} ({b.phone})</div>
+                  <Badge status={b.status} />
+                </div>
+                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>{b.service} · {b.slot}</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {b.status === "pending" && <GoldBtn small onClick={() => { setBookings(p => p.map(x => x.id === b.id ? { ...x, status: "confirmed" } : x)); showToast("Confirmed!"); }}>Confirm</GoldBtn>}
+                  <GhostBtn small onClick={() => { setBookings(p => p.filter(x => x.id !== b.id)); showToast("Removed"); }}>Delete</GhostBtn>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {adminSection === "therapists" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+              <SectionTitle>Therapists</SectionTitle>
+              <GoldBtn small onClick={() => setShowAddTherapist(true)}>+ Add</GoldBtn>
+            </div>
+            {therapists.map(t => (
+              <Card key={t.id}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name}</div>
+                <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 8 }}>{t.specialty}</div>
+                <GhostBtn small onClick={() => { setTherapists(p => p.map(x => x.id === t.id ? { ...x, available: !x.available } : x)); showToast("Status changed!"); }}>
+                  {t.available ? "Set Unavailable" : "Set Available"}
+                </GhostBtn>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {adminSection === "services" && (
+          <div>
+            <SectionTitle>Services</SectionTitle>
+            {services.map(s => (
+              <Card key={s.id}>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{s.name}</div>
+                <div style={{ fontSize: 12, color: C.gold, fontWeight: 700 }}>₹{s.price.toLocaleString()}</div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {adminSection === "settings" && (
+          <div>
+            <SectionTitle>Settings</SectionTitle>
+            <Input label="Spa Name" value={settingsDraft.spaName} onChange={v => setSettingsDraft(p => ({ ...p, spaName: v }))} />
+            <Input label="WhatsApp Number" value={settingsDraft.whatsapp} onChange={v => setSettingsDraft(p => ({ ...p, whatsapp: v }))} />
+            <Input label="Make.com Webhook URL" value={settingsDraft.makeWebhookUrl || ""} onChange={v => setSettingsDraft(p => ({ ...p, makeWebhookUrl: v }))} />
+            <GoldBtn onClick={() => { setSettings(settingsDraft); showToast("Saved!"); }} style={{ width: "100%" }}>Save Settings</GoldBtn>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={S.app}>
       {toast && (
         <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? C.red : C.gold, color: toast.type === "error" ? "#fff" : C.bg, padding: "8px 18px", borderRadius: 20, fontSize: 12, fontWeight: 700, zIndex: 999 }}>
           {toast.msg}
+        </div>
+      )}
+
+      {recentPopup && (
+        <div style={{ position: "fixed", bottom: 70, left: 20, right: 20, background: C.bg2, border: `1px solid ${C.borderGold}`, color: C.text, padding: "10px 14px", borderRadius: 8, fontSize: 11, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", zIndex: 99, display: "flex", alignItems: "center", gap: 10 }}>
+          <span>🔥</span> <span>{recentPopup}</span>
         </div>
       )}
 
@@ -213,7 +411,8 @@ export default function ZuidaraSpa() {
               <GoldDivider />
               <p style={{ fontSize: 11, color: C.textMuted, letterSpacing: 2, textTransform: "uppercase", margin: "0 0 24px" }}>{settings.tagline}</p>
               <GoldBtn onClick={() => { setView("book"); setBookStep(1); }} style={{ width: "100%", marginBottom: 10 }}>Book An Appointment</GoldBtn>
-              <GhostBtn onClick={() => setView("recommend")} style={{ width: "100%" }}>✨ Not Sure What To Book?</GhostBtn>
+              <GhostBtn onClick={() => setView("recommend")} style={{ width: "100%", marginBottom: 10 }}>✨ Not Sure What To Book?</GhostBtn>
+              <GhostBtn onClick={() => setView("bot")} style={{ width: "100%" }}>💬 Chat with Zara AI</GhostBtn>
             </div>
 
             <div style={{ padding: "16px 20px 0" }}>
@@ -232,6 +431,38 @@ export default function ZuidaraSpa() {
                   <GoldBtn small onClick={() => { setSelectedService(s.id); setView("book"); setBookStep(2); }}>Book</GoldBtn>
                 </Card>
               ))}
+            </div>
+          </div>
+        )}
+
+        {view === "bot" && (
+          <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 120px)" }}>
+            <div style={{ padding: "12px 20px", background: C.bg2, borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.gold }}>
+              Zara · AI Wellness Assistant
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+              {botMessages.map(msg => (
+                <div key={msg.id} style={{ alignSelf: msg.from === "user" ? "flex-end" : "flex-start", maxWidth: "80%" }}>
+                  <div style={{ background: msg.from === "user" ? C.gold : C.bg2, color: msg.from === "user" ? C.bg : C.text, padding: "10px 14px", borderRadius: 12, fontSize: 13 }}>
+                    {msg.text}
+                  </div>
+                  {msg.options && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {msg.options.map(opt => (
+                        <button key={opt} onClick={() => handleBotOption(opt)}
+                          style={{ background: "transparent", border: `1px solid ${C.gold}`, color: C.gold, padding: "4px 10px", borderRadius: 16, fontSize: 11, cursor: "pointer" }}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={botEndRef} />
+            </div>
+            <div style={{ padding: 12, background: C.bg2, display: "flex", gap: 8 }}>
+              <input value={botInput} onChange={e => setBotInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleBotSend()} placeholder="Ask Zara anything..." style={{ flex: 1, background: C.bg, border: `1px solid ${C.border}`, color: C.text, padding: "8px 12px", borderRadius: 20, fontSize: 13, outline: "none" }} />
+              <button onClick={handleBotSend} style={{ background: C.gold, border: "none", width: 36, height: 36, borderRadius: "50%", cursor: "pointer" }}>➤</button>
             </div>
           </div>
         )}
@@ -341,6 +572,11 @@ export default function ZuidaraSpa() {
                       const newBooking = { id: bookings.length + 1, customer: customerName, service: selectedServiceObj?.name, therapist: selectedTherapistObj?.name, date: selectedDate, slot: selectedSlot, amount: selectedServiceObj?.price, status: "confirmed", phone: customerPhone };
                       setBookings(p => [...p, newBooking]);
                       setBookingDone(true);
+
+                      if (settings.makeWebhookUrl) {
+                        fetch(settings.makeWebhookUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newBooking) }).catch(e => console.error(e));
+                      }
+
                       const msg = encodeURIComponent(`*Zuidara Spa Booking*\nName: ${customerName}\nPhone: ${customerPhone}\nService: ${selectedServiceObj?.name}\nTherapist: ${selectedTherapistObj?.name}\nTime: ${selectedDate}, ${selectedSlot}\nTotal: ₹${selectedServiceObj?.price}`);
                       window.open(`https://wa.me/${settings.whatsapp}?text=${msg}`, "_blank");
                     }} style={{ width: "100%" }}>Confirm via WhatsApp →</GoldBtn>
@@ -360,37 +596,16 @@ export default function ZuidaraSpa() {
           </div>
         )}
 
-        {view === "admin" && (
-          <div style={{ padding: "20px" }}>
-            {!adminUnlocked ? (
-              <div>
-                <SectionTitle>Admin Access</SectionTitle>
-                <Input label="PIN" value={adminPin} onChange={setAdminPin} type="password" placeholder="1234" />
-                <GoldBtn onClick={() => { if (adminPin === "1234" || adminPin === "") setAdminUnlocked(true); else showToast("Incorrect PIN", "error"); }} style={{ width: "100%" }}>Unlock</GoldBtn>
-              </div>
-            ) : (
-              <div>
-                <SectionTitle>Admin Dashboard ({bookings.length} Bookings)</SectionTitle>
-                {bookings.slice(-4).reverse().map(b => (
-                  <Card key={b.id}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{b.customer}</div>
-                    <div style={{ fontSize: 11, color: C.textMuted }}>{b.service} · {b.slot}</div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {view === "admin" && renderAdmin()}
       </div>
 
       {/* Navigation Bar */}
       <div style={S.bottomNav}>
         {[
           { id: "home", icon: "🏠", label: "Home" },
-          { id: "recommend", icon: "✨", label: "Quiz" },
+          { id: "bot", icon: "💬", label: "Zara AI" },
           { id: "book", icon: "📅", label: "Book" },
           { id: "membership", icon: "👑", label: "Pass" },
-          { id: "giftcards", icon: "🎁", label: "Gift" },
           { id: "admin", icon: "⚙️", label: "Admin" },
         ].map(nav => (
           <div key={nav.id} style={S.navItem(view === nav.id)} onClick={() => setView(nav.id)}>
